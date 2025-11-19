@@ -5,3 +5,5 @@
 *.code-workspace
 *.png
 *.zip
+*.pyc
+events.out.tfevents.*
