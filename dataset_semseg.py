@@ -10,6 +10,8 @@ import torchvision.transforms.functional as F
 # ----------------------------
 # Dataset
 # ----------------------------
+
+
 class SupermarketSemSeg(Dataset):
     """
     Expects a folder layout like:
@@ -26,16 +28,17 @@ class SupermarketSemSeg(Dataset):
         self,
         images_dir: str,
         masks_dir: str,
-        # transforms: Optional[Callable] = None,
         mask_suffix: str = "_mask",
         mask_mode: str = "uint8",  # or "uint16"
         include_filenames: bool = False,
+        transform=None
     ):
         self.images_dir = Path(images_dir)
         self.masks_dir = Path(masks_dir)
         self.mask_suffix = mask_suffix
         self.mask_mode = mask_mode
         self.include_filenames = include_filenames
+        self.transform = transform
 
         assert self.images_dir.exists(), f"Missing {self.images_dir}"
         assert self.masks_dir.exists(), f"Missing {self.masks_dir}"
@@ -59,7 +62,8 @@ class SupermarketSemSeg(Dataset):
                 pass
 
         if not self.items:
-            raise RuntimeError("No image/mask pairs found. Check paths and naming.")
+            raise RuntimeError(
+                "No image/mask pairs found. Check paths and naming.")
 
         # Optional: load mapping (contiguous labels) if present
         self.label_mapping: Optional[List[Dict]] = None
@@ -73,7 +77,8 @@ class SupermarketSemSeg(Dataset):
         return len(self.items)
 
     def _read_image(self, p: Path) -> Image.Image:
-        img = Image.open(p).convert("RGB")  # Opens an image as an Image object (in RGB format)
+        # Opens an image as an Image object (in RGB format)
+        img = Image.open(p).convert("RGB")
         return img
 
     def _read_mask(self, p: Path) -> Image.Image:
@@ -94,9 +99,11 @@ class SupermarketSemSeg(Dataset):
 
         img = self._read_image(img_path)
         mask = self._read_mask(mask_path)
-
-        # Transform image to tensor and mask to uint8 mask:
-        img_t = F.to_tensor(img)
+        if self.transform:
+            img_t = self.transform(img)
+        else:
+            # Transform image to tensor and mask to uint8 mask:
+            img_t = F.to_tensor(img)
         mask_t = F.pil_to_tensor(mask).squeeze(0)
 
         if self.include_filenames:
