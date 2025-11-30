@@ -6,4 +6,5 @@
 *.png
 *.zip
 *.pyc
+*.pth
 events.out.tfevents.*
